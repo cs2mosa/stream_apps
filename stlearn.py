@@ -2,15 +2,14 @@ import streamlit as st
 import youtube_transcript_api
 from langchain.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.agents import tool
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from youtube_transcript_api import YouTubeTranscriptApi
+from langchain.agents import tool,AgentExecutor, create_tool_calling_agent
 from pytube import extract
 
 st.set_page_config(page_title="ASU study partner", page_icon="🎥")
 
 st.title("ASU study partner is here for you!")
 st.subheader("AI-powered chatbot to process YouTube videos and texts")
+st.text("@mosa abdulaziz, for contact: 0122 586 2134 ")
 st.text("powered by gemini pro")
 
 prompt = ChatPromptTemplate.from_messages([
@@ -36,7 +35,7 @@ if api_key:
                     :parameter text: text to process
                     :returns the processed text tailored to user's need"""
         try:
-            prompting = f"as an expert in undergraduate courses,{request}: here is the text: \n\n{text}"
+            prompting = f"as an expert in undergraduate engineering courses {request}:here is the text{text}"
             returned_text = model.invoke(prompting)
             return returned_text.content
         except Exception:
@@ -58,18 +57,18 @@ if api_key:
             return "Not a valid YouTube video. Please use another link."
 
         try:
-            txt = YouTubeTranscriptApi.get_transcript(id_, ['ar', 'en'])
+            txt = youtube_transcript_api.YouTubeTranscriptApi.get_transcript(id_, ['ar', 'en'])
         except youtube_transcript_api.NoTranscriptFound:
             st.warning("No transcript found for video ID, please refer to this website to get a transcription then ask another prompt, link: https://tactiq.io/tools/youtube-transcript ")
             return "Error: Please try another video."
-        except Exception:
-            st.error("Error fetching text, please refer to this website to get a transcription then ask another prompt, link: https://tactiq.io/tools/youtube-transcript , or use any other transcript service")
+        except Exception as e:
+            st.error(f"Error fetching text, please refer to this website to get a transcription then ask another prompt, link: https://tactiq.io/tools/youtube-transcript , or use any other transcript service, {str(e)}")
             return "Error: Unable to fetch video transcript."
 
         whole_text = "".join(item['text'] for item in txt)
 
         try:
-            prompting = f"{request}:\n\n{whole_text}"
+            prompting = f"as an expert in undergraduate engineering courses {request}:here is the link{whole_text}"
             returned_text = model.invoke(prompting)
             return returned_text.content
         except Exception:
@@ -95,7 +94,7 @@ if api_key:
                     result = agent_exec.invoke({"input": user_input})
                 st.write(result['output'])
             except Exception:
-                st.error(f"An error occurred while processing your request")
+                st.error(f"An error occurred while processing your request, maybe you exhausted your api, wait so it can recharge")
         else:
             st.warning("Please enter a question or YouTube URL.")
 else:
